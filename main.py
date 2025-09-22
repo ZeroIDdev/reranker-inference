@@ -76,10 +76,19 @@ async def rerank_documents(request: RerankRequest):
             top_k=request.top_k
         )
         
-        logger.info(f"Reranking completed. Returned {len(results)} results.")
+        # Convert RankResult objects to dictionaries
+        formatted_results = []
+        for result in results:
+            formatted_results.append({
+                "index": result.index,
+                "score": result.score,
+                "document": result.document if hasattr(result, 'document') else None
+            })
+        
+        logger.info(f"Reranking completed. Returned {len(formatted_results)} results.")
         
         return RerankResponse(
-            results=results,
+            results=formatted_results,
             total_documents=len(request.documents),
             query=request.query
         )
@@ -104,9 +113,10 @@ async def rerank_simple(request: RerankRequest):
             top_k=request.top_k
         )
         
+        # Convert RankResult objects to simple format
         return {
-            "scores": [result["score"] for result in results],
-            "indices": [result["index"] for result in results],
+            "scores": [result.score for result in results],
+            "indices": [result.index for result in results],
             "query": request.query
         }
         
